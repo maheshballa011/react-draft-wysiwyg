@@ -5,7 +5,7 @@
   padding: 5px 2px;
   border-radius: 2px;
   border: 1px solid #F1F1F1;
-  width: 105px;
+  width: 140px;
   cursor: pointer;
   z-index: 100;
 }
@@ -16,6 +16,15 @@
   height: 15px;
   width: 15px;
   min-width: 15px;
+}
+.rdw-image-deletion-option {
+  height: 15px;
+  width: 15px;
+  min-width: 15px;
+  color: red;
+}
+.rdw-image-deletion-option img {
+  height: 20px;
 }
 .rdw-image-alignment {
   position: relative;

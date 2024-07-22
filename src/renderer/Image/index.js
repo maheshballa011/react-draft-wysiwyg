@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { EditorState } from 'draft-js';
+import { EditorState, Modifier, SelectionState } from 'draft-js';
 import classNames from 'classnames';
 import Option from '../../components/Option';
+import remove from '../../../images/delete.svg';
 import './styles.css';
 
 const getImageComponent = config => class Image extends Component {
@@ -47,7 +48,19 @@ const getImageComponent = config => class Image extends Component {
     });
   };
 
-  renderAlignmentOptions(alignment): Object {
+  renderDeletionOption(): Object {
+    return (
+      <Option
+      title='Remove Image'
+        onClick={this.removeEntity}
+        className="rdw-image-deletion-option"
+      >
+        <img src={remove} />
+      </Option>
+    );
+  }
+
+  renderAlignmentOptions(alignment, isDeletionEnabled): Object {
     return (
       <div
         className={classNames(
@@ -75,14 +88,38 @@ const getImageComponent = config => class Image extends Component {
         >
           R
         </Option>
+        {isDeletionEnabled && this.renderDeletionOption()}
       </div>
     );
   }
 
+
+  removeEntity: Function = (): void => {
+    const { block, contentState } = this.props;
+
+    const blockKey = block.getKey();
+    const afterKey = contentState.getKeyAfter(blockKey);
+    const targetRange = new SelectionState({
+        anchorKey: blockKey,
+        anchorOffset: 0,
+        focusKey: afterKey,
+        focusOffset: 0
+    });
+    let newContentState = Modifier.setBlockType(
+      contentState,
+      targetRange,
+      'unstyled'
+    );
+
+    newContentState = Modifier.removeRange(newContentState, targetRange, 'backward');
+    config.onChange(EditorState.push(config.getEditorState(), newContentState, 'remove-range'));
+  };
+
   render(): Object {
     const { block, contentState } = this.props;
     const { hovered } = this.state;
-    const { isReadOnly, isImageAlignmentEnabled } = config;
+    const { isReadOnly, isImageAlignmentEnabled, isImageDeletionEnabled } = config;
+    const isDeletionEnabled = isImageDeletionEnabled();
     const entity = contentState.getEntity(block.getEntityAt(0));
     const { src, alignment, height, width, alt } = entity.getData();
 
@@ -109,8 +146,8 @@ const getImageComponent = config => class Image extends Component {
             }}
           />
           {
-            !isReadOnly() && hovered && isImageAlignmentEnabled() ?
-              this.renderAlignmentOptions(alignment)
+            !isReadOnly() && hovered && isImageAlignmentEnabled() || isDeletionEnabled ?
+              this.renderAlignmentOptions(alignment, isDeletionEnabled)
               :
               undefined
           }
