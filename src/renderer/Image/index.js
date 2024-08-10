@@ -4,6 +4,7 @@ import { EditorState, Modifier, SelectionState } from 'draft-js';
 import classNames from 'classnames';
 import Option from '../../components/Option';
 import remove from '../../../images/delete.svg';
+import KeyDownHandler from "../../event-handler/keyDown";
 import './styles.css';
 
 const getImageComponent = config => class Image extends Component {
@@ -14,7 +15,18 @@ const getImageComponent = config => class Image extends Component {
 
   state: Object = {
     hovered: false,
+    activeImage: ''
   };
+
+  constructor(props) {
+    super(props);
+    this.removeEntity = this.removeEntity.bind(this);
+  }
+
+  componentWillUnmount() {
+    this.setState({activeImage: ''});
+    KeyDownHandler.deregisterCallBack(this.removeEntity);
+  }
 
   setEntityAlignmentLeft: Function = (): void => {
     this.setEntityAlignment('left');
@@ -49,10 +61,11 @@ const getImageComponent = config => class Image extends Component {
   };
 
   renderDeletionOption(): Object {
+    KeyDownHandler.registerCallBack(this.removeEntity);
     return (
       <Option
       title='Remove Image'
-        onClick={this.removeEntity}
+        onClick={this.removeEntity.bind(this, {key: 'delete'})}
         className="rdw-image-deletion-option"
       >
         <img src={remove} />
@@ -94,26 +107,40 @@ const getImageComponent = config => class Image extends Component {
   }
 
 
-  removeEntity: Function = (): void => {
-    const { block, contentState } = this.props;
-
-    const blockKey = block.getKey();
-    const afterKey = contentState.getKeyAfter(blockKey);
-    const targetRange = new SelectionState({
-        anchorKey: blockKey,
-        anchorOffset: 0,
-        focusKey: afterKey,
-        focusOffset: 0
-    });
-    let newContentState = Modifier.setBlockType(
-      contentState,
-      targetRange,
-      'unstyled'
-    );
-
-    newContentState = Modifier.removeRange(newContentState, targetRange, 'backward');
-    config.onChange(EditorState.push(config.getEditorState(), newContentState, 'remove-range'));
+  removeEntity: Function = (event): void => {
+    if(event &&  (event.key.toLowerCase() === 'backspace' || event.key == 'delete')){
+      const { block, contentState } = this.props;
+      if(this.state.activeImage == block || event.key == 'delete') {
+        this.setState({
+          activeImage: ''
+        })
+        const blockKey = block.getKey();
+          const afterKey = contentState.getKeyAfter(blockKey);
+          const targetRange = new SelectionState({
+              anchorKey: blockKey,
+              anchorOffset: 0,
+              focusKey: afterKey,
+              focusOffset: 0
+          });
+          let newContentState = Modifier.setBlockType(
+            contentState,
+            targetRange,
+            'unstyled'
+          );
+      
+          newContentState = Modifier.removeRange(newContentState, targetRange, 'backward');
+          config.onChange(EditorState.push(config.getEditorState(), newContentState, 'remove-range'));
+      }
+    }
   };
+
+  handleKeyDown = (event) => {
+    event.preventDefault();
+    console.log("keydown here")
+    if (event.key === 'Backspace') {
+      this.removeEntity();
+    }
+  }
 
   render(): Object {
     const { block, contentState } = this.props;
@@ -127,6 +154,12 @@ const getImageComponent = config => class Image extends Component {
       <span
         onMouseEnter={this.toggleHovered}
         onMouseLeave={this.toggleHovered}
+        onClick={()=>{
+          this.setState({
+            activeImage: this.props.block
+          })
+        }}
+        onKeyDown={this.handleKeyDown}
         className={classNames(
           'rdw-image-alignment',
           {

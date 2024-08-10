@@ -8,7 +8,10 @@ export default {
   },
 
   registerCallBack: (callBack): void => {
-    callBacks.push(callBack);
+    const callBackIndex = callBacks.findIndex(cb => cb == callBack);
+    if(callBackIndex == -1){
+      callBacks.push(callBack);
+    }
   },
 
   deregisterCallBack: (callBack): void => {
