@@ -138,6 +138,8 @@ class LayoutComponent extends Component {
           showImageLoading: false,
           dragEnter: false,
           imgSrc: data.link || data.url,
+          width: isNaN(this.props.config.defaultSize.width) ? this.props.config.defaultSize.width: data.width,
+          height: isNaN(this.props.config.defaultSize.height) ? this.props.config.defaultSize.height: data.height,
         });
         this.fileUpload = false;
       })
